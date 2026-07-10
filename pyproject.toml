@@ -1,13 +1,18 @@
 [project]
 name = "winpulse"
-version = "0.1.0"
-description = "Cross-platform light system metric telemetry engine"
+version = "0.1.1"  # Note: Bump this version to 0.1.1 so PyPI accepts the update!
+description = "A lightweight, blazingly fast cross-platform system metric telemetry engine for Windows, Linux, and macOS."
 readme = "README.md"
 authors = [
     { name = "Mayank170906", email = "mayankchoudharysept17@gmail.com" }
 ]
 requires-python = ">=3.8"
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Mayank170906/WinPulse"
+Repository = "https://github.com/Mayank170906/WinPulse"
+Issues = "https://github.com/Mayank170906/WinPulse/issues"
 
 [build-system]
 requires = ["uv_build>=0.8.14,<0.9.0"]
