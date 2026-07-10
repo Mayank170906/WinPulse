@@ -25,5 +25,5 @@ jobs:
 
       - name: Install local package and execute test import
         run: |
-          uv pip install -e .
-          uv run python -c "from winpulse import WinPulse; import json; print(json.dumps(WinPulse().get_all_system_details(), indent=4))"
+          uv pip install --system -e .
+          python -c "from winpulse import WinPulse; import json; print(json.dumps(WinPulse().get_all_system_details(), indent=4))"
