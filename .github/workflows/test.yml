@@ -1,0 +1,22 @@
+name: Cross-Platform Telemetry Test
+
+on: [push, pull_request]
+
+jobs:
+  test-telemetry:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Execute script file
+        run: python main.py
