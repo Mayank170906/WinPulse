@@ -13,10 +13,17 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
       - name: Set up Python environment
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Execute script file
-        run: python main.py
+      - name: Install local package and execute test import
+        run: |
+          uv pip install -e .
+          uv run python -c "from winpulse import WinPulse; import json; print(json.dumps(WinPulse().get_all_system_details(), indent=4))"
