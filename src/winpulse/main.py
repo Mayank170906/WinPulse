@@ -31,6 +31,10 @@ class WinPulse:
                        "ram_available_gb=[math]::Round($freeRam / 1GB, 1)} "
                        "| ConvertTo-Json\"")
                 
+                # Execute and parse JSON directly inside the Windows block
+                raw_output = subprocess.check_output(cmd, shell=True).decode().strip()
+                dynamic_data = json.loads(raw_output)
+                
             elif self.os_name == "Linux":
                 # Safe Linux flat token execution separated by pipes
                 cmd = ("echo \"$(lscpu | grep 'Model name:' | cut -d: -f2 | xargs)|"
@@ -75,10 +79,6 @@ class WinPulse:
                 }            
             else:
                 return {"error": "Unsupported Operating System"}
-
-            # Fire the single terminal execution
-            raw_output = subprocess.check_output(cmd, shell=True).decode().strip()
-            dynamic_data = json.loads(raw_output)
 
             # Combine everything cleanly into your final flat output dictionary
             return {
