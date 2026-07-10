@@ -32,24 +32,47 @@ class WinPulse:
                        "| ConvertTo-Json\"")
                 
             elif self.os_name == "Linux":
-                # Consolidated single-shot Bash terminal string
-                cmd = ("echo '{"
-                       "\"cpu_company_name\": \\\"$(lscpu | grep \"Model name\" | cut -d: -f2 | xargs)\\\", "
-                       "\"physical_cores\": $(lscpu | grep \"Core(s) per socket\" | awk \"{print \\$4}\"), "
-                       "\"cpu_percentage_use\": $(vmstat 1 2 | tail -1 | awk \"{print 100 - \\$15}\"), "
-                       "\"ram_total_gb\": $(free -g | awk \"/^Mem:/ {print \\$2}\"), "
-                       "\"ram_available_gb\": $(free -g | awk \"/^Mem:/ {print \\$7}\")"
-                       "}'")
+                # Safe Linux flat token execution separated by pipes
+                cmd = ("echo \"$(lscpu | grep 'Model name:' | cut -d: -f2 | xargs)|"
+                       "$(lscpu | grep 'Core(s) per socket:' | awk '{print $4}')|"
+                       "$(vmstat 1 2 | tail -1 | awk '{print 100 - $15}')|"
+                       "$(free -m | awk '/^Mem:/ {print $2}')|"
+                       "$(free -m | awk '/^Mem:/ {print $7}')\"")
                 
+                raw_output = subprocess.check_output(cmd, shell=True).decode().strip()
+                parts = raw_output.split('|')
+                
+                # Math translation converting MB allocations to clean float GB metrics
+                tot_gb = round(int(parts[3]) / 1024, 1) if parts[3].isdigit() else 0.0
+                avail_gb = round(int(parts[4]) / 1024, 1) if parts[4].isdigit() else 0.0
+                
+                dynamic_data = {
+                    "cpu_company_name": parts[0],
+                    "physical_cores": int(parts[1]) if parts[1].isdigit() else self.logical_cores,
+                    "cpu_percentage_use": parts[2],
+                    "ram_total_gb": tot_gb,
+                    "ram_available_gb": avail_gb
+                }                
             elif self.os_name == "Darwin":  # macOS
-                # Consolidated native Zsh query mapping Apple hardware controllers
-                cmd = ("echo '{"
-                       "\"cpu_company_name\": \\\"$(sysctl -n machdep.cpu.brand_string)\\\", "
-                       "\"physical_cores\": $(sysctl -n hw.physicalcpu), "
-                       "\"cpu_percentage_use\": $(ps -A -o %cpu | awk \"{s+=\\$1} END {print s}\"), "
-                       "\"ram_total_gb\": $(($(sysctl -n hw.memsize) / 1024 / 1024 / 1024)), "
-                       "\"ram_available_gb\": $(($(vm_stat | awk \"/Pages free/ {print \\$3}\" | sed \"s/\\\\.//\") * 4096 / 1024 / 1024 / 1024))"
-                       "}'")
+                # Safe Mac Zsh single line telemetry extraction separated by pipes
+                cmd = ("echo \"$(sysctl -n machdep.cpu.brand_string)|"
+                       "$(sysctl -n hw.physicalcpu)|"
+                       "$(ps -A -o %cpu | awk '{s+=$1} END {print s}')|"
+                       "$(($(sysctl -n hw.memsize) / 1024 / 1024 / 1024))|"
+                       "$(($(vm_stat | awk '/Pages free/ {print $3}' | tr -d '.') * 4096 / 1024 / 1024 / 1024))\"")
+                
+                raw_output = subprocess.check_output(cmd, shell=True).decode().strip()
+                parts = raw_output.split('|')
+                
+                mac_usage = round(float(parts[2]) / self.logical_cores, 1) if parts[2] else 0.0
+                
+                dynamic_data = {
+                    "cpu_company_name": parts[0],
+                    "physical_cores": int(parts[1]) if parts[1].isdigit() else self.logical_cores,
+                    "cpu_percentage_use": mac_usage,
+                    "ram_total_gb": parts[3],
+                    "ram_available_gb": parts[4]
+                }            
             else:
                 return {"error": "Unsupported Operating System"}
 
