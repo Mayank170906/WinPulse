@@ -2,7 +2,6 @@ import subprocess
 import platform
 import json
 import os
-
 class WinPulse:
     def __init__(self):
         # 1. Immediate Static Meta Data (Instant execution via Python standard library)
